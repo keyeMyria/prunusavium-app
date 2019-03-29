@@ -4,8 +4,12 @@ import 'package:prunusavium/screen/favorite.dart';
 import 'package:prunusavium/screen/rank.dart';
 import 'package:prunusavium/screen/search.dart';
 import 'package:prunusavium/store/favorite.dart';
+import 'package:prunusavium/store/search.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+SharedPreferences prefs;
 FavoriteStore favStore = FavoriteStore();
+SearchStore searchStore = SearchStore(prefs);
 
 class HomePage extends StatefulWidget {
   @override
@@ -14,14 +18,19 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  int _index = 0;
+  int _idx = 0;
   List<Widget> pages = List<Widget>();
   List<String> titles = ["收藏", "排行"];
 
   @override
-  void initState() {
+  initState() {
     super.initState();
     pages..add(FavoritePage(favStore))..add(RankPage());
+  }
+
+  Future asyncInit() async {
+    prefs = await SharedPreferences.getInstance();
+    return prefs;
   }
 
   @override
@@ -34,10 +43,13 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: _buildBNB(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+        child: Icon(Icons.search),
         mini: true,
         onPressed: () {
-          // showSearch()
+          showSearch(
+            context: context,
+            delegate: SearchPage(searchStore),
+          );
         },
       ),
     );
@@ -49,14 +61,25 @@ class _HomePageState extends State<HomePage> {
         icon: Icon(Icons.portrait, size: 30.0),
         onPressed: () => _scaffoldKey.currentState.openDrawer(),
       ),
-      title: Text(titles[_index]),
+      title: Text(titles[_idx]),
     );
   }
 
   Widget _buildBody() {
-    return IndexedStack(
-      index: _index,
-      children: pages,
+    return FutureBuilder(
+      future: asyncInit(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        return IndexedStack(
+          index: _idx,
+          children: pages,
+        );
+      },
     );
   }
 
@@ -118,7 +141,7 @@ class _HomePageState extends State<HomePage> {
             child: Icon(Icons.favorite_border),
             onTap: () {
               setState(() {
-                _index = 0;
+                _idx = 0;
               });
             },
             onDoubleTap: () {
@@ -129,7 +152,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.library_books),
             onPressed: () {
               setState(() {
-                _index = 1;
+                _idx = 1;
               });
             },
           ),

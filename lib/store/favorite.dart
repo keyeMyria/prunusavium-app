@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:mobx/mobx.dart';
 import 'package:prunusavium/model/favorite.dart';
 
@@ -8,6 +6,8 @@ part 'favorite.g.dart';
 class FavoriteStore = _FavoriteStore with _$FavoriteStore;
 
 abstract class _FavoriteStore implements Store {
+  _FavoriteStore();
+
   @observable
   ObservableList<Favorite> favorites = ObservableList<Favorite>();
 
